@@ -111,12 +111,12 @@ export default function Home() {
           // show list
           <ul style={{listStyle: 'none', padding: 0}}>
             {expenses.map((expense) => (
-              <li key={expense.id} style={{ padding: '15px', marginBottom:'10', border: '1px solid #ddd', borderRadius: '8px'}}>
+              <li key={expense.id} style={{ padding: '15px', marginBottom:'10px', border: '1px solid #ddd', borderRadius: '8px'}}>
                 <strong>{expense.description}</strong> - ${expense.amount.toFixed(2)}
                 <div style={{ fontSize: '14px', color: '#666' }}>
                   {expense.category} • {expense.date}
                 </div>
-                <button  onClick={() => handleDeleteExpense(expense.id)} style={{ padding: '5px 10px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                <button  onClick={() => handleDeleteExpense(expense.id)} style={{ marginTop:'10px', padding: '5px 10px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                   Delete
                 </button>
               </li>
