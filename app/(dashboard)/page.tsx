@@ -17,7 +17,7 @@ export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([]) // arr of expense objs
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState('Online Purchases') // default to "online-purchases" if "category" not selected
 
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +31,7 @@ export default function Home() {
     setExpenses([...expenses, newExpense]) // spread operator, copies all existing expenses. adds the new one at the end
     setAmount('') // Clears all the form inputs
     setDescription('')
-    setCategory('food') // Resets category back to default 'food'
+    setCategory('online-purchases') // Resets category back to default 'food'
   }
 
   const handleDeleteExpense = (id: string) => {
