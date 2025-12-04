@@ -1,24 +1,19 @@
-'use client'
 
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { createClient } from '@/lib/supabase'
 
-export default function Login() {
-  const supabase = createClient()
-
+import { GalleryVerticalEnd } from "lucide-react"
+import { LoginForm } from "@/components/login-form"
+export default function LoginPage() {
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', backgroundColor: '#28282B' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px', color: 'white' }}>
-        💰 Spending Tracker
-      </h1>
-      <Auth
-        supabaseClient={supabase}
-        appearance={{ theme: ThemeSupa }}
-        theme='dark'
-        providers={[ 'google', 'apple']}
-        redirectTo={`${window.location.origin}/`}
-      />
+    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+      <div className="flex w-full max-w-sm flex-col gap-6">
+        <a href="#" className="flex items-center gap-2 self-center font-medium">
+          <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+            <GalleryVerticalEnd className="size-4" />
+          </div>
+          Card Tracker
+        </a>
+        <LoginForm />
+      </div>
     </div>
   )
 }
