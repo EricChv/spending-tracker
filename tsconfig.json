@@ -19,7 +19,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"] //example: @/components/ui/button → src/components/ui/button
     },
     "plugins": [
       {
