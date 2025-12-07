@@ -116,7 +116,7 @@ export function LoginForm({
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback` // e.g., https://yourapp.com/auth/callback
+        redirectTo: `${window.location.origin}/callback` // (auth) route group doesn't add to URL path
       }
     })
 
@@ -191,7 +191,7 @@ export function LoginForm({
                   {loading ? "Loading..." : (isSignUp ? "Sign up" : "Login")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don't have an account? {" "}
+                  {isSignUp ? "Already have an account? " : "Don't have an account? "}
                   <a 
                     href="#"
                     onClick={(e) => {
@@ -199,7 +199,7 @@ export function LoginForm({
                     setIsSignUp(!isSignUp)
                     }}
                   >
-                    Sign up
+                    {isSignUp ? "Sign in" : "Sign up"}
                   </a>
                 </FieldDescription>
               </Field>
@@ -211,9 +211,7 @@ export function LoginForm({
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
       </FieldDescription>
-      {message && (
-        <p className="text-destructive text-sm">{message}</p>
-      )}
+      
     </div>
   )
 }
