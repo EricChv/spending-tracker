@@ -304,44 +304,38 @@ export default function Home() {
                 <h3 className="font-semibold">Recent Transactions</h3>
                 <button className="text-xs text-muted-foreground hover:text-foreground">View All</button>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-pink-500/10">
-                      <span className="text-lg">S</span>
+              
+              {loadingTransactions ? (
+                // Loading state while fetching transactions
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              ) : transactions.length === 0 ? (
+                // Empty state when no transactions exist
+                <p className="text-sm text-muted-foreground">No transactions yet</p>
+              ) : (
+                // Display real transactions from database
+                <div className="space-y-3">
+                  {transactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-full bg-pink-500/10">
+                          <span className="text-lg">{transaction.description[0]}</span>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium">{transaction.description}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`text-sm font-semibold ${
+                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-medium">Samantha William</div>
-                      <div className="text-xs text-muted-foreground">30 April 2024, 10:15 AM</div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-green-600">+$850</div>
+                  ))}
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-cyan-500/10">
-                      <span className="text-lg">🛒</span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">Grocery at Shop</div>
-                      <div className="text-xs text-muted-foreground">29 April 2024, 6:45 PM</div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-red-600">-$125</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-orange-500/10">
-                      <span className="text-lg">☕</span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">Coffee</div>
-                      <div className="text-xs text-muted-foreground">21 April 2024, 8:30 AM</div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-red-600">-$8</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
