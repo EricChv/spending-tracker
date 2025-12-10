@@ -92,7 +92,7 @@ export default function AccountsPage() {
   // Add Account Form States (controls the form inputs)
   const [showForm, setShowForm] = useState(false)  // Toggle to show/hide the "Add Account" form
   const [name, setName] = useState('')             // Form input: Account name
-  const [type, setType] = useState('checking')     // Form input: Account type (default: checking)
+  const [accountType, setAccountType] = useState('checking')     // Form input: Account type (default: checking)
   const [balance, setBalance] = useState('')       // Form input: Current balance (as string, converted to number on submit)
   const [lastFour, setLastFour] = useState('')     // Form input: Last 4 digits of account number
   const [institution, setInstitution] = useState('')  // Form input: Bank/institution name
@@ -196,25 +196,28 @@ export default function AccountsPage() {
 
     // Insert new account into 'accounts' table
     // Supabase automatically generates id and created_at timestamp
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('accounts')
       .insert({
         user_id: session.user.id,                   // Link account to current user
         name: name,                                  // Account name from form input
-        type: type,                                  // Account type from dropdown
+        type: accountType,                           // Account type from dropdown
         balance: parseFloat(balance) || 0,          // Convert string to number, default to 0 if invalid
         account_number_last_four: lastFour || null, // Last 4 digits or null if empty
         institution_name: institution || null,      // Bank name or null if empty
       })
+      .select()  // Return the inserted row
 
-    // If insert failed, show error alert and exit
+    // If insert failed, show detailed error information
     if (error) {
       console.error('Error creating account:', error)
-      alert('Failed to create account')
+      console.error('Error details:', JSON.stringify(error, null, 2))
+      alert(`Failed to create account: ${error.message || 'Unknown error'}`)
     } else {
       // ✅ Success! Reset all form fields to empty/default values
+      console.log('Account created successfully:', data)
       setName('')
-      setType('checking')
+      setAccountType('checking')
       setBalance('')
       setLastFour('')
       setInstitution('')
@@ -352,7 +355,7 @@ export default function AccountsPage() {
                   {/* Account Type Dropdown (Required) */}
                   <div className="grid gap-2">
                     <Label htmlFor="type">Account Type *</Label>
-                    <Select value={type} onValueChange={setType}>  {/* onValueChange updates state */}
+                    <Select value={accountType} onValueChange={setAccountType}>  {/* onValueChange updates state */}
                       <SelectTrigger>
                         <SelectValue />  {/* Shows currently selected value */}
                       </SelectTrigger>

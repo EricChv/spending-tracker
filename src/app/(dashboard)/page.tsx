@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -394,7 +395,7 @@ export default function Home() {
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-semibold">My Wallet</h3>
-              <a href="/accounts" className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent">+ Add New</a>
+              <Link href="/accounts" className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent">+ Add New</Link>
             </div>
             
             {loadingAccounts ? (
