@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase"
 import { AppSidebar } from "@/components/app-sidebar"
+import { AccountCard } from "@/components/account-card"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -395,7 +396,7 @@ export default function Home() {
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-semibold">My Wallet</h3>
-              <Link href="/accounts" className="rounded-md border px-3 py-1.5 text-xs hover:bg-accent">+ Add New</Link>
+              <Link href="/accounts" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all h-9 px-4 py-2 border border-border bg-background text-foreground hover:bg-accent">+ Add New</Link>
             </div>
             
             {loadingAccounts ? (
@@ -407,40 +408,13 @@ export default function Home() {
             ) : (
               // Display real accounts from database
               <div className="grid gap-4 md:grid-cols-2">
-                {accounts.map((account, index) => {
-                  // Alternate colors for visual variety
-                  const gradients = [
-                    'from-green-500 to-green-600',
-                    'from-blue-500 to-blue-600',
-                    'from-purple-500 to-purple-600',
-                    'from-orange-500 to-orange-600',
-                  ]
-                  const gradient = gradients[index % gradients.length]
-                  
-                  return (
-                    <div key={account.id} className={`relative overflow-hidden rounded-2xl bg-linear-to-br ${gradient} p-6 text-white`}>
-                      <div className="mb-8">
-                        <div className="text-xs opacity-80">{account.type.replace('_', ' ')}</div>
-                        <div className="mt-1 text-base font-semibold">{account.name}</div>
-                        {account.account_number_last_four && (
-                          <div className="mt-1 font-mono text-sm tracking-wider">
-                            •••• •••• •••• {account.account_number_last_four}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-end justify-between">
-                        <div className="text-2xl font-bold">
-                          ${Math.abs(account.balance).toFixed(2)}
-                        </div>
-                        {account.institution_name && (
-                          <div className="rounded bg-white/20 px-2 py-1 text-xs font-semibold uppercase">
-                            {account.institution_name.substring(0, 4)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
+                {accounts.map((account, index) => (
+                  <AccountCard
+                    key={account.id}
+                    account={account}
+                    index={index}
+                  />
+                ))}
               </div>
             )}
           </div>

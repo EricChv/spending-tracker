@@ -27,6 +27,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
 import { AppSidebar } from "@/components/app-sidebar"
+import { AccountCard } from "@/components/account-card"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -255,7 +256,7 @@ export default function AccountsPage() {
       console.error('Error deleting account:', error)
       alert('Failed to delete account')
     } else {
-      // ✅ Success! Refresh the accounts list (deleted account will be gone)
+      // Success! Refresh the accounts list (deleted account will be gone)
       fetchAccounts()
     }
   }
@@ -321,9 +322,12 @@ export default function AccountsPage() {
               <h1 className="text-2xl font-bold">Accounts</h1>
               <p className="text-muted-foreground">Manage your bank accounts</p>
             </div>
-            {/* Toggle button: Shows "Add Account" or "Cancel" based on form visibility */}
-            <Button onClick={() => setShowForm(!showForm)}>
-              {showForm ? 'Cancel' : 'Add Account'}
+            {/* Toggle button: Shows "+ Add New" or "Cancel" based on form visibility */}
+            <Button 
+              onClick={() => setShowForm(!showForm)}
+              variant="primary"
+            >
+              {showForm ? 'Cancel' : '+ Add New'}
             </Button>
           </div>
 
@@ -409,7 +413,7 @@ export default function AccountsPage() {
                   {/* Submit Button */}
                   <Button type="submit" disabled={saving} className="w-full">
                     {/* Show "Saving..." text when saving = true, otherwise "Add Account" */}
-                    {saving ? 'Saving...' : 'Add Account'}
+                    {saving ? 'Saving...' : '+ Add New'}
                   </Button>
                 </form>
               </CardContent>
@@ -421,67 +425,15 @@ export default function AccountsPage() {
           {/* ═══════════════════════════════════════════════════════════ */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {/* Loop through all accounts and render a card for each */}
-            {accounts.map((account, index) => {
-              // Predefined gradient colors for visual variety
-              const gradients = [
-                'from-blue-500 to-blue-600',
-                'from-purple-500 to-purple-600',
-                'from-green-500 to-green-600',
-                'from-orange-500 to-orange-600',
-              ]
-              // Cycle through gradients using modulo (%) operator
-              // Example: index 0 → blue, 1 → purple, 2 → green, 3 → orange, 4 → blue again
-              const gradient = gradients[index % gradients.length]
-
-              return (
-                <div
-                  key={account.id}  // React requires unique key for list items
-                  className={`relative overflow-hidden rounded-2xl bg-linear-to-br ${gradient} p-6 text-white`}
-                >
-                  {/* Account Info Section */}
-                  <div className="mb-8">
-                    {/* Account type label (replace underscores with spaces) */}
-                    <div className="text-xs opacity-80">{account.type.replace('_', ' ')}</div>
-                    
-                    {/* Account name (e.g., "My Checking") */}
-                    <div className="mt-1 text-base font-semibold">{account.name}</div>
-                    
-                    {/* Last 4 digits (only show if provided) */}
-                    {account.account_number_last_four && (
-                      <div className="mt-1 font-mono text-sm tracking-wider">
-                        •••• {account.account_number_last_four}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Balance Display */}
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className="text-xs opacity-80">Balance</div>
-                      <div className="text-2xl font-bold">
-                        {/* Format balance with commas and 2 decimal places (e.g., $1,234.56) */}
-                        ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Institution name (only show if provided) */}
-                  {account.institution_name && (
-                    <div className="mt-4 text-xs opacity-80">{account.institution_name}</div>
-                  )}
-                  
-                  {/* Delete Button (positioned in top-right corner) */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteAccount(account.id)}  // Trigger delete function
-                    className="absolute right-2 top-2 text-white hover:bg-white/20"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              )
-            })}
+            {accounts.map((account, index) => (
+              <AccountCard
+                key={account.id}
+                account={account}
+                index={index}
+                onDelete={deleteAccount}
+                showDeleteButton={true}
+              />
+            ))}
           </div>
 
           {/* ═══════════════════════════════════════════════════════════ */}
@@ -490,7 +442,11 @@ export default function AccountsPage() {
           {accounts.length === 0 && !showForm && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground">No accounts yet</p>
-              <Button onClick={() => setShowForm(true)} className="mt-4">
+              <Button 
+                onClick={() => setShowForm(true)} 
+                variant="primary"
+                className="mt-4"
+              >
                 Add Your First Account
               </Button>
             </div>

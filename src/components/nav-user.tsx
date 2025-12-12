@@ -57,13 +57,13 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg bg-sidebar-accent-foreground/10 text-sidebar-accent-foreground font-semibold">
+                <AvatarFallback className="rounded-lg bg-white text-[#2A363B] font-semibold">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
-                <span className="text-muted-foreground truncate text-xs">
+                <span className="truncate text-xs opacity-60">
                   {user.email}
                 </span>
               </div>
@@ -78,13 +78,13 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg bg-sidebar-accent-foreground/10 text-sidebar-accent-foreground font-semibold">
+                  <AvatarFallback className="rounded-lg bg-[#2A363B] text-white font-semibold">
                     {getInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="text-muted-foreground truncate text-xs">
+                  <span className="truncate text-xs opacity-60">
                     {user.email}
                   </span>
                 </div>
