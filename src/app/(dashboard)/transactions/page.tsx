@@ -69,12 +69,19 @@ import {
 interface Transaction {
   id: string
   user_id: string
+  account_id: string
+  name: string
   amount: number
-  description: string
-  type: 'income' | 'expense'
-  category?: string
   date: string
+  category: string | null
+  plaid_transaction_id: string
   created_at: string
+}
+
+// Helper to derive transaction type from amount
+// Plaid convention: positive amount = expense, negative = income/refund
+const getTransactionType = (amount: number): 'income' | 'expense' => {
+  return amount >= 0 ? 'expense' : 'income'
 }
 
 export default function TransactionsPage() {
@@ -93,17 +100,8 @@ export default function TransactionsPage() {
   // Filter & Search States
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'description'>('date')
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'name'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  
-  // Add Transaction Form States
-  const [showForm, setShowForm] = useState(false)
-  const [formAmount, setFormAmount] = useState('')
-  const [formDescription, setFormDescription] = useState('')
-  const [formType, setFormType] = useState<'income' | 'expense'>('expense')
-  const [formCategory, setFormCategory] = useState('Online Purchases')
-  const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
-  const [saving, setSaving] = useState(false)
 
   // ═══════════════════════════════════════════════════════════════════
   // AUTHENTICATION CHECK
@@ -152,68 +150,42 @@ export default function TransactionsPage() {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ADD NEW TRANSACTION
+  // SYNC PLAID TRANSACTIONS
   // ═══════════════════════════════════════════════════════════════════
-  const handleAddTransaction = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-
+  const [syncing, setSyncing] = useState(false)
+  
+  const handleSyncTransactions = async () => {
+    setSyncing(true)
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     
     if (!session) {
-      setSaving(false)
+      setSyncing(false)
       return
     }
 
-    const { error } = await supabase
-      .from('transactions')
-      .insert([{
-        user_id: session.user.id,
-        amount: parseFloat(formAmount),
-        description: formDescription,
-        type: formType,
-        category: formCategory,
-        date: formDate
-      }])
+    try {
+      const response = await fetch('/api/plaid/sync-transactions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
 
-    if (error) {
-      console.error('Error adding transaction:', error)
-      alert('Failed to add transaction. Please try again.')
-    } else {
-      // Reset form
-      setFormAmount('')
-      setFormDescription('')
-      setFormType('expense')
-      setFormCategory('Online Purchases')
-      setFormDate(new Date().toISOString().split('T')[0])
-      setShowForm(false)
+      const data = await response.json()
       
-      // Refresh transaction list
-      fetchTransactions()
+      if (data.success) {
+        alert(`Successfully synced ${data.count} transactions!`)
+        fetchTransactions()
+      } else {
+        alert('Failed to sync transactions. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error syncing transactions:', error)
+      alert('Failed to sync transactions. Please try again.')
     }
-
-    setSaving(false)
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // DELETE TRANSACTION
-  // ═══════════════════════════════════════════════════════════════════
-  const handleDeleteTransaction = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this transaction?')) return
-
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('transactions')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting transaction:', error)
-      alert('Failed to delete transaction. Please try again.')
-    } else {
-      fetchTransactions()
-    }
+    
+    setSyncing(false)
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -221,11 +193,12 @@ export default function TransactionsPage() {
   // ═══════════════════════════════════════════════════════════════════
   const filteredAndSortedTransactions = transactions
     .filter(transaction => {
-      // Filter by type
-      if (filterType !== 'all' && transaction.type !== filterType) return false
+      // Filter by type (derived from amount)
+      const txType = getTransactionType(transaction.amount)
+      if (filterType !== 'all' && txType !== filterType) return false
       
       // Filter by search query
-      if (searchQuery && !transaction.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (searchQuery && !transaction.name.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false
       }
       
@@ -237,9 +210,9 @@ export default function TransactionsPage() {
       if (sortBy === 'date') {
         comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
       } else if (sortBy === 'amount') {
-        comparison = a.amount - b.amount
-      } else if (sortBy === 'description') {
-        comparison = a.description.localeCompare(b.description)
+        comparison = Math.abs(a.amount) - Math.abs(b.amount)
+      } else if (sortBy === 'name') {
+        comparison = a.name.localeCompare(b.name)
       }
       
       return sortOrder === 'asc' ? comparison : -comparison
@@ -247,11 +220,11 @@ export default function TransactionsPage() {
 
   // Calculate totals for filtered transactions
   const totalIncome = filteredAndSortedTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .filter(t => getTransactionType(t.amount) === 'income')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
   
   const totalExpenses = filteredAndSortedTransactions
-    .filter(t => t.type === 'expense')
+    .filter(t => getTransactionType(t.amount) === 'expense')
     .reduce((sum, t) => sum + t.amount, 0)
 
   // ═══════════════════════════════════════════════════════════════════
@@ -294,14 +267,14 @@ export default function TransactionsPage() {
         {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="flex flex-1 flex-col gap-4 p-4">
           
-          {/* Page Title & Add Transaction Button */}
+          {/* Page Title & Sync Button */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Transactions</h1>
-              <p className="text-muted-foreground">View and manage all your transactions</p>
+              <p className="text-muted-foreground">Transactions from your connected bank accounts</p>
             </div>
-            <Button onClick={() => setShowForm(!showForm)}>
-              {showForm ? 'Cancel' : '+ Add Transaction'}
+            <Button onClick={handleSyncTransactions} disabled={syncing}>
+              {syncing ? 'Syncing...' : '🔄 Sync Transactions'}
             </Button>
           </div>
 
@@ -335,92 +308,7 @@ export default function TransactionsPage() {
             </Card>
           </div>
 
-          {/* Add Transaction Form */}
-          {showForm && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Transaction</CardTitle>
-                <CardDescription>Enter the transaction details below</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleAddTransaction} className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="type">Type *</Label>
-                      <Select value={formType} onValueChange={(value: 'income' | 'expense') => setFormType(value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="income">Income</SelectItem>
-                          <SelectItem value="expense">Expense</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
 
-                    <div className="grid gap-2">
-                      <Label htmlFor="amount">Amount *</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={formAmount}
-                        onChange={(e) => setFormAmount(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description *</Label>
-                    <Input
-                      id="description"
-                      placeholder="e.g., Grocery shopping"
-                      value={formDescription}
-                      onChange={(e) => setFormDescription(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select value={formCategory} onValueChange={setFormCategory}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Online Purchases">Online Purchases</SelectItem>
-                          <SelectItem value="Groceries">Groceries</SelectItem>
-                          <SelectItem value="Transportation">Transportation</SelectItem>
-                          <SelectItem value="Entertainment">Entertainment</SelectItem>
-                          <SelectItem value="Utilities">Utilities</SelectItem>
-                          <SelectItem value="Healthcare">Healthcare</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="date">Date *</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={formDate}
-                        onChange={(e) => setFormDate(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <Button type="submit" disabled={saving}>
-                    {saving ? 'Adding...' : 'Add Transaction'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Filters & Search */}
           <Card>
@@ -449,7 +337,7 @@ export default function TransactionsPage() {
                     <SelectContent>
                       <SelectItem value="date">Date</SelectItem>
                       <SelectItem value="amount">Amount</SelectItem>
-                      <SelectItem value="description">Description</SelectItem>
+                      <SelectItem value="name">Name</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -496,54 +384,50 @@ export default function TransactionsPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredAndSortedTransactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`flex size-12 items-center justify-center rounded-full ${
-                          transaction.type === 'income' ? 'bg-green-500/10' : 'bg-red-500/10'
-                        }`}>
-                          <span className="text-xl">{transaction.description[0].toUpperCase()}</span>
-                        </div>
-                        <div>
-                          <div className="font-medium">{transaction.description}</div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{new Date(transaction.date).toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric', 
-                              year: 'numeric' 
-                            })}</span>
-                            {transaction.category && (
-                              <>
-                                <span>•</span>
-                                <span>{transaction.category}</span>
-                              </>
-                            )}
+                  {filteredAndSortedTransactions.map((transaction) => {
+                    const txType = getTransactionType(transaction.amount)
+                    const displayAmount = Math.abs(transaction.amount)
+                    
+                    return (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`flex size-12 items-center justify-center rounded-full ${
+                            txType === 'income' ? 'bg-green-500/10' : 'bg-red-500/10'
+                          }`}>
+                            <span className="text-xl">{transaction.name[0]?.toUpperCase() || '?'}</span>
+                          </div>
+                          <div>
+                            <div className="font-medium">{transaction.name}</div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>{new Date(transaction.date).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}</span>
+                              {transaction.category && (
+                                <>
+                                  <span>•</span>
+                                  <span>{transaction.category}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-4">
+                        
                         <div className={`text-lg font-semibold ${
-                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                          txType === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString('en-US', { 
+                          {txType === 'income' ? '+' : '-'}${displayAmount.toLocaleString('en-US', { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}
                         </div>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => handleDeleteTransaction(transaction.id)}
-                        >
-                          Delete
-                        </Button>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </CardContent>
