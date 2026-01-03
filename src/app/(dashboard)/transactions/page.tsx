@@ -74,12 +74,12 @@ interface Transaction {
   amount: number
   date: string
   category: string | null
-  plaid_transaction_id: string
+  bank_transaction_id: string
   created_at: string
 }
 
 // Helper to derive transaction type from amount
-// Plaid convention: positive amount = expense, negative = income/refund
+// Banking convention: positive amount = expense, negative = income/refund
 const getTransactionType = (amount: number): 'income' | 'expense' => {
   return amount >= 0 ? 'expense' : 'income'
 }
@@ -150,7 +150,7 @@ export default function TransactionsPage() {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // SYNC PLAID TRANSACTIONS
+  // SYNC BANK TRANSACTIONS
   // ═══════════════════════════════════════════════════════════════════
   const [syncing, setSyncing] = useState(false)
   
@@ -165,21 +165,17 @@ export default function TransactionsPage() {
     }
 
     try {
-      const response = await fetch('/api/plaid/sync-transactions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      })
+      // TODO: Implement Teller.io sync here
+      // Example:
+      // const response = await fetch('/api/teller/sync-transactions', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${session.access_token}`
+      //   }
+      // })
 
-      const data = await response.json()
-      
-      if (data.success) {
-        alert(`Successfully synced ${data.count} transactions!`)
-        fetchTransactions()
-      } else {
-        alert('Failed to sync transactions. Please try again.')
-      }
+      alert('Sync functionality ready for Teller.io integration')
+      // fetchTransactions()  // Uncomment after implementation
     } catch (error) {
       console.error('Error syncing transactions:', error)
       alert('Failed to sync transactions. Please try again.')

@@ -27,8 +27,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
 import { AppSidebar } from "@/components/app-sidebar"
-import { PlaidLinkButton } from "@/components/plaid-link-button"
-import { getPlaidLinkToken } from "@/lib/plaid-link"
 import { AccountCard } from "@/components/account-card"
 import {
   Breadcrumb,
@@ -79,15 +77,6 @@ interface Account {
 }
 
 export default function AccountsPage() {
-    // Load Plaid Link JS script if not already loaded
-    useEffect(() => {
-      if (!window.Plaid) {
-        const script = document.createElement("script");
-        script.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
-        script.async = true;
-        document.body.appendChild(script);
-      }
-    }, []);
   
   // ═══════════════════════════════════════════════════════════════════
   // STATE MANAGEMENT
@@ -100,9 +89,6 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true)  // True while checking if user is logged in
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null)  // Logged-in user info
   const [accounts, setAccounts] = useState<Account[]>([])  // Array of all user's accounts from database
-  
-  // Plaid Link Token State
-  const [plaidLinkToken, setPlaidLinkToken] = useState<string | null>(null)
 
   // Add Account Form States (controls the form inputs)
   const [showForm, setShowForm] = useState(false)  // Toggle to show/hide the "Add Account" form
@@ -120,8 +106,6 @@ export default function AccountsPage() {
   useEffect(() => {
     checkAuth()      // Verify user is logged in, redirect if not
     fetchAccounts()  // Load all accounts from database
-    // Fetch Plaid link token
-    getPlaidLinkToken().then(setPlaidLinkToken)
   }, [])
 
   // ═══════════════════════════════════════════════════════════════════
@@ -334,21 +318,20 @@ export default function AccountsPage() {
         <div className="flex flex-1 flex-col gap-4 p-4">
           
 
-          {/* Page Title, Add Account Button, and Plaid Link Button */}
+          {/* Page Title and Action Buttons */}
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-2xl font-bold">Accounts</h1>
               <p className="text-muted-foreground">Manage your bank accounts</p>
             </div>
             <div className="flex gap-2 mt-2 md:mt-0">
-              {/* Plaid Link Button (only show if link token is available) */}
-              {plaidLinkToken && user && (
-                <PlaidLinkButton
-                  linkToken={plaidLinkToken}
-                  userId={user.id}
-                  onAccountsAdded={fetchAccounts}
-                />
-              )}
+              {/* Connect Bank Button - Ready for Teller.io integration */}
+              <Button 
+                onClick={() => alert('Connect bank functionality - integrate Teller.io here')}
+                variant="default"
+              >
+                🏦 Connect Bank
+              </Button>
 
               {/* Toggle button: Shows "+ Add New" or "Cancel" based on form visibility */}
               <Button 
