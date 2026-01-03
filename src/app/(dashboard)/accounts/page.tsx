@@ -476,13 +476,7 @@ export default function AccountsPage() {
           {accounts.length === 0 && !showForm && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground">No accounts yet</p>
-              <Button 
-                onClick={() => setShowForm(true)} 
-                variant="primary"
-                className="mt-4"
-              >
-                Add Your First Account
-              </Button>
+              
             </div>
           )}
         </div>
